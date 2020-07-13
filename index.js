@@ -102,8 +102,8 @@ async function appHome({ logger, client, event, say }) {
           "type": "mrkdwn",
           "text": "[理工情報]チャンネル窓口です :laptop_parrot:\n"
             + " *#理工情報* に参加しているメンバーは、このアプリを追加しているプライベートアプリに参加することができます。アプリに申請するには、2つの方法があります。\n"
-            + "1. `\\join-info-channel` と入力する\n"
-            + "2. ショートカット「理工情報プライベートチャンネル」を押す\n"
+            + " 1. `\\join-info-channel` と入力する\n"
+            + " 2. ショートカット「理工情報プライベートチャンネル」を押す\n"
             + "アプリが不要になった場合、 チャンネル内で`@[理工情報]チャンネル窓口 チャンネルから退室して` とメンション付きメッセージを送ると退室してくれます。"
         }
       },
@@ -254,7 +254,7 @@ async function handleViewSubmission({ logger, client, body, ack }) {
   // データ送信
   await ack();
   // 理工情報メンバー全員取得（時間がかかりそう？）
-  const members = await getInfoMembersList("CU41VH9JA", client).catch(err => {
+  const members = await getInfoMembersList(process.env.MASTER_CHANNEL_ID, client).catch(err => {
     logger.error(err);
     return [];
   });
