@@ -73,6 +73,10 @@ app.event("app_mention", async ({ logger, client, event, say }) => {
 
 });
 
+app.event("app_home_opened", async ({ logger, client, event, say }) => {
+  await appHome({ logger, client, event, say });
+});
+
 app.shortcut("join-info-channel", async ({ logger, client, body, ack }) => {
   await openModal({ logger, client, ack, body });
 });
@@ -85,7 +89,78 @@ app.view("join-info-res", async ({ logger, client, body, ack }) => {
   await handleViewSubmission({ logger, client, body, ack });
 });
 
+
 // ---------------------------------------------------------------
+
+async function appHome({ logger, client, event, say }) {
+  try {
+    console.log(event);
+    const blocks = [
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "[理工情報]チャンネル窓口です :laptop_parrot:\n"
+            + " *#理工情報* に参加しているメンバーは、このアプリを追加しているプライベートアプリに参加することができます。アプリに申請するには、2つの方法があります。\n"
+            + "1. `\\join-info-channel` と入力する\n"
+            + "2. ショートカット「理工情報プライベートチャンネル」を押す\n"
+            + "アプリが不要になった場合、 チャンネル内で`@[理工情報]チャンネル窓口 チャンネルから退室して` とメンション付きメッセージを送ると退室してくれます。"
+        }
+      },
+      {
+        "type": "divider"
+      },
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "チャンネル情報(自動更新)"
+        }
+      }
+    ]
+    const channels = await getPCList(client).catch(() => []);
+    const infoblock = [];
+    for (i in channels) {
+      const res = await client.conversations.info({
+        "channel": channels[i],
+        "include_num_members": true
+      });
+      if (res.ok) {
+        infoblock.push({
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": `*${res.channel.name}*\n`
+              + `トピック: ${res.channel.topic.value}\n`
+              + `説　　明: ${res.channel.purpose.value}\n`
+              + `参加人数: ${res.channel.num_members}`
+          }
+        });
+      }
+    }
+    if (event.tab === "home") {
+      await client.views.publish({
+        "user_id": event.user,
+        "view": {
+          "type": "home",
+          "blocks": blocks.concat(infoblock).concat([
+            {
+              "type": "context",
+              "elements": [
+                {
+                  "type": "mrkdwn",
+                  "text": "Author: Riku Yamamoto(@yamamoto_s_a2r4r4)"
+                }
+              ]
+            }
+          ])
+        }
+      });
+    }
+  } catch (e) {
+    logger.error("appHome" + e);
+  }
+}
 
 async function openModal({ logger, client, ack, body }) {
   try {
@@ -240,22 +315,42 @@ async function getPrivateChannelList(client) {
   return client.users.conversations(param).then(pageLoaded);
 }
 
-// infoのメンバーを全員取得する
-async function getInfoMembersList(channelId, client) {
+// プライベートチャンネルの取得(cursor対応版)
+async function getPCList(client) {
   const param = {
-    "channel": channelId,
-    "limit": 1000 // 理工学部情報学科は大体900人弱
-  };
-  let members = [];
+    "types": "private_channel",
+    "limit": 100 //default
+  }
+  const channels = []
   function pageLoaded(res) {
-    res.members.forEach(m => members.push(m));
+    console.log(res)
+    res.channels.forEach(c => channels.push(
+      c.id
+    ));
     if (res.response_metadata && res.response_metadata.next_cursor && res.response_metadata.next_cursor !== '') {
       param.cursor = res.response_metadata.next_cursor;
-      return client.conversations.members(param).then(pageLoaded);
+      return client.users.conversations(param).then(pageLoaded);
     }
-    return members;
+    return channels;
   }
-  return client.conversations.members(param).then(pageLoaded);
+  return client.users.conversations(param).then(pageLoaded);
+}
+
+async function getChannelInfo(list, client) {
+  const blocks = []
+  list.forEach(c => {
+    const res = client.conversations.info({ "channel": c, "include_num_members": true })
+    if (res.ok) {
+      blocks.push({
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": `*{$c.channel.name}*`
+        }
+      });
+    }
+  });
+  return blocks;
 }
 
 // root
