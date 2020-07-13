@@ -101,10 +101,10 @@ async function appHome({ logger, client, event, say }) {
         "text": {
           "type": "mrkdwn",
           "text": "[理工情報]チャンネル窓口です :laptop_parrot:\n"
-            + " *#理工情報* に参加しているメンバーは、このアプリを追加しているプライベートアプリに参加することができます。アプリに申請するには、2つの方法があります。\n"
+            + " *#理工情報* に参加しているメンバーは、このアプリを追加しているプライベートチャンネルに参加することができます。以下の2つの方法があります。\n"
             + " 1. `\\join-info-channel` と入力する\n"
             + " 2. ショートカット「理工情報プライベートチャンネル」を押す\n"
-            + "アプリが不要になった場合、 チャンネル内で`@[理工情報]チャンネル窓口 チャンネルから退室して` とメンション付きメッセージを送ると退室してくれます。"
+            + "\nアプリが不要になった場合、 チャンネル内で`@[理工情報]チャンネル窓口 チャンネルから退室して` とメンション付きメッセージを送ると退室してくれます。"
         }
       },
       {
@@ -336,21 +336,22 @@ async function getPCList(client) {
   return client.users.conversations(param).then(pageLoaded);
 }
 
-async function getChannelInfo(list, client) {
-  const blocks = []
-  list.forEach(c => {
-    const res = client.conversations.info({ "channel": c, "include_num_members": true })
-    if (res.ok) {
-      blocks.push({
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": `*{$c.channel.name}*`
-        }
-      });
+// infoのメンバーを全員取得する
+async function getInfoMembersList(channelId, client) {
+  const param = {
+    "channel": channelId,
+    "limit": 1000 // 理工学部情報学科は大体900人弱
+  };
+  let members = [];
+  function pageLoaded(res) {
+    res.members.forEach(m => members.push(m));
+    if (res.response_metadata && res.response_metadata.next_cursor && res.response_metadata.next_cursor !== '') {
+      param.cursor = res.response_metadata.next_cursor;
+      return client.conversations.members(param).then(pageLoaded);
     }
-  });
-  return blocks;
+    return members;
+  }
+  return client.conversations.members(param).then(pageLoaded);
 }
 
 // root
