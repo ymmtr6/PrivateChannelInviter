@@ -94,51 +94,50 @@ app.view("join-info-res", async ({ logger, client, body, ack }) => {
 
 async function appHome({ logger, client, event, say }) {
   try {
-    console.log(event);
-    const blocks = [
-      {
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": "[理工情報]チャンネル窓口です :laptop_parrot:\n"
-            + " *#理工情報* に参加しているメンバーは、このアプリを追加しているプライベートチャンネルに参加することができます。以下の2つの方法があります。\n"
-            + " 1.  `\\join-info-channel` と入力する\n"
-            + " 2.  ショートカット「理工情報プライベートチャンネル」を押す\n"
-            + "\nアプリが不要になった場合、 チャンネル内で `@[理工情報]チャンネル窓口 チャンネルから退室して` とメンション付きメッセージを送ると退室してくれます。"
-        }
-      },
-      {
-        "type": "divider"
-      },
-      {
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": "チャンネル情報(自動更新)"
-        }
-      }
-    ]
-    const channels = await getPCList(client).catch(() => []);
-    const infoblock = [];
-    for (i in channels) {
-      const res = await client.conversations.info({
-        "channel": channels[i],
-        "include_num_members": true
-      });
-      if (res.ok) {
-        infoblock.push({
+    if (event.tab === "home") {
+      const blocks = [
+        {
           "type": "section",
           "text": {
             "type": "mrkdwn",
-            "text": `*${res.channel.name}*\n`
-              + `トピック: ${res.channel.topic.value}\n`
-              + `説　　明: ${res.channel.purpose.value}\n`
-              + `参加人数: ${res.channel.num_members}`
+            "text": "[理工情報]チャンネル窓口です :laptop_parrot:\n"
+              + " *#理工情報* に参加しているメンバーは、このアプリを追加しているプライベートチャンネルに参加することができます。以下の2つの方法があります。\n"
+              + " 1.  `\\join-info-channel` と入力する\n"
+              + " 2.  ショートカット「理工情報プライベートチャンネル」を押す\n"
+              + "\nアプリが不要になった場合、 チャンネル内で `@[理工情報]チャンネル窓口 チャンネルから退室して` とメンション付きメッセージを送ると退室してくれます。"
           }
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "チャンネル情報(自動更新)"
+          }
+        }
+      ];
+      const channels = await getPCList(client).catch(() => []);
+      const infoblock = [];
+      for (i in channels) {
+        const res = await client.conversations.info({
+          "channel": channels[i],
+          "include_num_members": true
         });
+        if (res.ok) {
+          infoblock.push({
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": `*${res.channel.name}*\n`
+                + `トピック: ${res.channel.topic.value}\n`
+                + `説　　明: ${res.channel.purpose.value}\n`
+                + `参加人数: ${res.channel.num_members}`
+            }
+          });
+        }
       }
-    }
-    if (event.tab === "home") {
       await client.views.publish({
         "user_id": event.user,
         "view": {
@@ -270,10 +269,10 @@ async function handleViewSubmission({ logger, client, body, ack }) {
       "users": body.user.id
     }).catch(err => {
       logger.error(err);
-      msg = "Inviteエラーが発生したため、 *" + channelName + "* への招待ができませんでした。"
+      msg = `Inviteエラーが発生したため、 *${channelName}* への招待ができませんでした。(${err.data.error})`;
     });
   } else {
-    msg = "*#理工情報* のメンバーではないため、 *" + channelName + "* への参加申請は却下されました。"
+    msg = `*#理工情報* のメンバーではないため、 *${channelName}* への参加申請は却下されました。`
   }
 
   // メッセージを送信
@@ -297,7 +296,7 @@ async function getPrivateChannelList(client) {
   }
   let channels = []
   function pageLoaded(res) {
-    console.log(res)
+    //console.log(res)
     res.channels.forEach(c => channels.push(
       {
         "text": {
@@ -325,7 +324,7 @@ async function getPCList(client) {
   }
   const channels = []
   function pageLoaded(res) {
-    console.log(res)
+    //console.log(res)
     res.channels.forEach(c => channels.push(
       c.id
     ));
