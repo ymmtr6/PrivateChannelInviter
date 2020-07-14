@@ -168,6 +168,7 @@ async function openModal({ logger, client, ack, body }) {
       .then((channelList) => {
         if (channelList.length === 0)
           throw new Error("Channels list is empty");
+        return channelList;
       }).catch(() => [{
         "text": {
           "type": "plain_text",
