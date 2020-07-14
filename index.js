@@ -12,7 +12,10 @@ const logLevel = process.env.SLACK_LOG_LEVEL || LogLevel.DEBUG;
 const { App, ExpressReceiver } = require("@slack/bolt");
 // If you deploy this app to FaaS, turning this on is highly recommended
 // Refer to https://github.com/slackapi/bolt/issues/395 for details
-const processBeforeResponse = false;
+
+// FaaSで実行する場合はtrueにセット(envはStringとして読み込まれる為このような比較)
+const processBeforeResponse = process.env.PROCESS_BEFORE_RESPONSE === "true";
+
 // Manually instantiate to add external routes afterwards
 const receiver = new ExpressReceiver({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
