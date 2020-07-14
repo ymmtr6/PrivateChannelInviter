@@ -164,17 +164,18 @@ async function appHome({ logger, client, event, say }) {
 
 async function openModal({ logger, client, ack, body }) {
   try {
-    const channels = await getPrivateChannelList(client).catch(() => []);
-    if (channels.length == 0) {
-      channels.push({
+    const channels = await getPrivateChannelList(client)
+      .then((channelList) => {
+        if (channelList.length === 0)
+          throw new Error("Channels list is empty");
+      }).catch(() => [{
         "text": {
           "type": "plain_text",
           "text": "NO CHANNEL DATA",
           "emoji": true
         },
         "value": "dummy"
-      });
-    }
+      }]);
 
     //console.log(channels);
     const res = await client.views.open({
